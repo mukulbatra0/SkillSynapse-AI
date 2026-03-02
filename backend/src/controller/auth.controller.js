@@ -1,7 +1,6 @@
 import userModel from "../models/user.model.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import cookieParser from "cookie-parser"
 
 
 async function registerUserController(req, res){
@@ -52,4 +51,51 @@ async function registerUserController(req, res){
 
 }
 
-export default {registerUserController}
+async function loginUserController(req, res){
+  const {email, password} = req.body
+
+  if(!email || !password){
+    return res.status(400).json({
+      message: "Please provide email and password"
+    })
+  }
+
+  const user = await userModel.findOne({
+    email
+  })
+
+  if(!user){
+    return res.status(400).json({
+      message: "Invalid email or password"
+    })
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+
+  if(!isPasswordValid){
+    return res.status(400).json({
+      message: "Invalid  password"
+    })
+  }
+
+  const token = jwt.sign({
+    id: user._id,
+    username: user.username,
+    email: user.email
+  }, process.env.JWT_SECRET, {expiresIn: "1d"}
+  )
+
+  res.cookie("token", token)
+
+  res.status(200).json({
+    message: "User logged in successfully",
+    user:{
+      id: user._id,
+      username: user.username,
+      email: user.email
+    }
+  })
+
+}
+
+export default {registerUserController, loginUserController}
