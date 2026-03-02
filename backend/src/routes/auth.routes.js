@@ -22,4 +22,14 @@ const authRouter = express.Router()
  */
 
   authRouter.post("/login", authController.loginUserController)
+
+
+    /**
+ * @route GET /api/auth/logout
+ * @description logout  a user
+ * @access private
+ * 
+ */
+
+    authRouter.get("/logout", authController.logoutUserController)
 export default authRouter
