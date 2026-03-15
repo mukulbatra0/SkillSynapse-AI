@@ -68,8 +68,7 @@ async function generateInterviewReportController(req, res) {
     resume: resumeContent.text,//ec
     selfDescription,
     jobDescription
-})
-  console.log("Raw AI Response:", interviewReportByAi); // Debug log
+}) 
   
   // Sanitize the AI response to ensure proper structure
   const sanitizedReport = {
