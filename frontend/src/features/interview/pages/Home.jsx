@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
 import './Home.scss'
+import { useInterview } from '../hooks/useInterview'
 
 const Home = () => {
+  const { generateReport, loading } = useInterview()
+
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     jobDescription: '',
@@ -10,7 +13,6 @@ const Home = () => {
     resume: null
   })
   const [resumeFileName, setResumeFileName] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
 
   const handleInputChange = (e) => {
@@ -63,28 +65,24 @@ const Home = () => {
     if (!validateForm()) {
       return
     }
-
-    setIsLoading(true)
     
     try {
-      const formDataToSend = new FormData()
-      formDataToSend.append('jobDescription', formData.jobDescription)
-      formDataToSend.append('selfDescription', formData.selfDescription)
-      formDataToSend.append('resume', formData.resume)
-
-      // TODO: Replace with actual API call
-      // const response = await interviewAPI.generateInterview(formDataToSend)
+      const reportData = await generateReport({
+        jobDescription: formData.jobDescription,
+        selfDescription: formData.selfDescription,
+        resumeFile: formData.resume
+      })
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      console.log('Form submitted:', formData)
-      // navigate('/interview-session')
+      // Navigate to interview page with the report ID
+      if (reportData && reportData._id) {
+        navigate(`/interview/${reportData._id}`)
+      } else {
+        // Fallback: navigate without ID, will use context
+        navigate('/interview')
+      }
     } catch (error) {
       console.error('Error submitting form:', error)
       setErrors({ submit: 'Failed to generate interview. Please try again.' })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -203,9 +201,9 @@ const Home = () => {
           <button 
             type="submit" 
             className='submit-btn'
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <span className="spinner"></span>
                 Generating...

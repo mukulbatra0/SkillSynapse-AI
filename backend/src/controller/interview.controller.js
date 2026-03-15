@@ -50,6 +50,10 @@ const sanitizeQuestions = (questions) => {
     });
   };
 
+  /**
+ * @description Generate a comprehensive interview report based on the candidate's resume, self-description, and job description.
+ * @access Private
+ */
 async function generateInterviewReportController(req, res) {
 
 
@@ -95,8 +99,43 @@ async function generateInterviewReportController(req, res) {
 
 }
 
+/**
+ * @description Retrieve an interview report by its ID for the authenticated user.
+ * @route GET /api/interview/report/:interviewId
+ * @access Private
+ */
 
+async function getInterviewReportByIDController(req, res) {
+  const { interviewId } = req.params;
+  const interviewReport = await InterviewReport.findOne({ _id: interviewId, user: req.user.id });
+
+  if(!interviewReport) {
+    return res.status(404).json({ message: "Interview report not found" });
+  }
+
+  res.status(200).json({
+    message: "Interview report retrieved successfully",
+    interviewReport
+  })
+}
+
+/**
+ * @description Retrieve all interview reports for the authenticated user.
+ * @route GET /api/interview/
+ * @access Private
+ */
+
+async function getAllInterviewReportsController(req, res) {
+  const interviewReports = await InterviewReport.find({ user: req.user.id }).createAt({ createdAt: -1 }).select("-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"); // Exclude large text fields for listing
+
+  res.status(200).json({
+    message: "Interview reports retrieved successfully",
+    interviewReports
+  })
+}
 
 export default{
-  generateInterviewReportController
+  generateInterviewReportController,
+  getInterviewReportByIDController,
+  getAllInterviewReportsController
 }

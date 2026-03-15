@@ -1,77 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import './Interview.scss'
+import { useInterview } from '../hooks/useInterview'
 
 const Interview = () => {
-  const { id } = useParams()
+  const { interviewId } = useParams()
   const navigate = useNavigate()
+  const { report, loading, getReportByID } = useInterview()
   
-  const [interviewData, setInterviewData] = useState(null)
   const [activeSection, setActiveSection] = useState('technical')
   const [selectedQuestion, setSelectedQuestion] = useState(0)
   const [answer, setAnswer] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Fetch interview data from API
-    // Simulating API call with mock data
-    const mockData = {
-      _id: "69b6450abc981d9d75a95222",
-      matchScore: 92,
-      title: "Full Stack Developer (MERN Stack)",
-      technicalQuestions: [
-        {
-          question: "You've used Redux Toolkit in your Media Search & Collection App. Can you explain the benefits of using Redux Toolkit over plain Redux, and how it simplifies state management in a large React application?",
-          intention: "Assess technical knowledge",
-          answer: ""
-        },
-        {
-          question: "In your PortMySim project, you built a RESTful backend with Node.js and Express.js. Describe how you handled routing and middleware in Express.js, and provide an example of a custom middleware you might implement.",
-          intention: "Assess technical knowledge",
-          answer: ""
-        },
-        {
-          question: "The job description mentions working with MongoDB databases. How would you design the schema for a 'user' and 'post' collection in a social media application, considering relationships and common query patterns?",
-          intention: "Assess technical knowledge",
-          answer: ""
-        }
-      ],
-      behavioralQuestions: [
-        {
-          question: "Tell me about a time you had to collaborate with a product or design team on a project. How did you ensure effective communication and translate their requirements into technical solutions?",
-          intention: "Assess soft skills",
-          answer: ""
-        },
-        {
-          question: "In your PortMySim project, you aimed to minimize service downtime by 90%. Describe a significant technical challenge you encountered during its development and how you approached solving it.",
-          intention: "Assess problem-solving",
-          answer: ""
-        }
-      ],
-      skillGaps: [
-        { skill: "Authentication/Authorization", severity: "medium" },
-        { skill: "Testing (Unit/Integration)", severity: "medium" },
-        { skill: "Deployment & DevOps Practices", severity: "medium" }
-      ],
-      preparationPlan: [
-        { day: 1, focus: "Redux Toolkit Deep Dive", tasks: ["Review Redux Toolkit documentation", "Build sample app"] },
-        { day: 2, focus: "Express.js Middleware", tasks: ["Study middleware patterns", "Implement custom middleware"] },
-        { day: 3, focus: "MongoDB Schema Design", tasks: ["Review schema best practices", "Design sample schemas"] }
-      ]
+    if (interviewId) {
+      // Fetch report by ID from URL parameter
+      getReportByID(interviewId)
+    } else if (!report) {
+      // If no ID and no report in context, redirect to home
+      navigate('/')
     }
-    
-    setTimeout(() => {
-      setInterviewData(mockData)
-      setIsLoading(false)
-    }, 1000)
-  }, [id])
+    // If no ID but report exists in context, use that (from Home page navigation)
+  }, [interviewId])
+
 
   const getCurrentQuestions = () => {
-    if (!interviewData) return []
+    if (!report) return []
     return activeSection === 'technical' 
-      ? interviewData.technicalQuestions 
+      ? report.technicalQuestions 
       : activeSection === 'behavioral'
-      ? interviewData.behavioralQuestions
+      ? report.behavioralQuestions
       : []
   }
 
@@ -81,7 +39,7 @@ const Interview = () => {
     setAnswer('')
   }
 
-  if (isLoading) {
+  if (loading || !report) {
     return (
       <div className="interview-loading">
         <div className="spinner-large"></div>
@@ -106,7 +64,7 @@ const Interview = () => {
             </button>
             <div className="match-score">
               <span className="score-label">Match Score</span>
-              <span className="score-value">{interviewData?.matchScore}%</span>
+              <span className="score-value">{report?.matchScore}%</span>
             </div>
           </div>
 
@@ -119,7 +77,7 @@ const Interview = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
               Technical Questions
-              <span className="count">{interviewData?.technicalQuestions.length}</span>
+              <span className="count">{report?.technicalQuestions?.length || 0}</span>
             </button>
 
             <button 
@@ -130,7 +88,7 @@ const Interview = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               Behavioral Questions
-              <span className="count">{interviewData?.behavioralQuestions.length}</span>
+              <span className="count">{report?.behavioralQuestions?.length || 0}</span>
             </button>
 
             <button 
@@ -141,7 +99,7 @@ const Interview = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
               Preparation Roadmap
-              <span className="count">{interviewData?.preparationPlan.length}</span>
+              <span className="count">{report?.preparationPlan?.length || 0}</span>
             </button>
           </nav>
         </aside>
@@ -152,7 +110,7 @@ const Interview = () => {
             <>
               <div className="content-header">
                 <h1>{activeSection === 'technical' ? 'Technical' : 'Behavioral'} Questions</h1>
-                <p className="subtitle">{interviewData?.title}</p>
+                <p className="subtitle">{report?.jobTitle || 'Interview Questions'}</p>
               </div>
 
               <div className="questions-list">
@@ -198,11 +156,11 @@ const Interview = () => {
             <>
               <div className="content-header">
                 <h1>Preparation Roadmap</h1>
-                <p className="subtitle">{interviewData?.preparationPlan.length} days plan</p>
+                <p className="subtitle">{report?.preparationPlan?.length || 0} days plan</p>
               </div>
 
               <div className="roadmap-grid">
-                {interviewData?.preparationPlan.slice(0, 21).map((day) => (
+                {report?.preparationPlan?.slice(0, 21).map((day) => (
                   <div key={day.day} className="roadmap-card">
                     <div className="day-number">Day {day.day}</div>
                     <h4>{day.focus}</h4>
@@ -223,7 +181,7 @@ const Interview = () => {
           <div className="skill-gaps-section">
             <h3>Skill Gaps</h3>
             <div className="skill-gaps-list">
-              {interviewData?.skillGaps.map((gap, index) => (
+              {report?.skillGaps?.map((gap, index) => (
                 <div key={index} className={`skill-gap-item severity-${gap.severity}`}>
                   <span className="skill-name">{gap.skill}</span>
                   <span className="severity-badge">{gap.severity}</span>
