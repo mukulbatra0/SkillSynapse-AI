@@ -1,5 +1,5 @@
 import { PDFParse } from "pdf-parse";
-import generateResumeReport from "../services/ai.service.js";
+import {generateResumeReport , genrateResumePdf} from "../services/ai.service.js";
 import InterviewReport from "../models/interviewReport.model.js";
 
 
@@ -126,16 +126,35 @@ async function getInterviewReportByIDController(req, res) {
  */
 
 async function getAllInterviewReportsController(req, res) {
-  const interviewReports = await InterviewReport.find({ user: req.user.id }).createAt({ createdAt: -1 }).select("-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"); // Exclude large text fields for listing
+  const interviewReports = await InterviewReport.find({ user: req.user.id }).sort({ createdAt: -1 }).select("-resume -selfDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"); // Exclude large text fields for listing
 
   res.status(200).json({
     message: "Interview reports retrieved successfully",
     interviewReports
   })
 }
+async function generateResumePdfController(req, res) {
+  const {interviewReportId} = req.params;
+  const interviewReport = await InterviewReport.findOne({ _id: interviewReportId, user: req.user.id });
+
+  if(!interviewReport) {
+    return res.status(404).json({ message: "Interview report not found" });
+  }
+  const { resume, selfDescription, jobDescription } = interviewReport;
+  const pdfBuffer = await genrateResumePdf({resume, selfDescription, jobDescription});
+
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename=resume_${interviewReportId}.pdf`,
+    'Content-Length': pdfBuffer.length
+  });
+  res.send(pdfBuffer);
+
+}
 
 export default{
   generateInterviewReportController,
   getInterviewReportByIDController,
-  getAllInterviewReportsController
+  getAllInterviewReportsController,
+  generateResumePdfController
 }

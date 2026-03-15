@@ -6,7 +6,7 @@ import { useInterview } from '../hooks/useInterview'
 const Interview = () => {
   const { interviewId } = useParams()
   const navigate = useNavigate()
-  const { report, loading, getReportByID } = useInterview()
+  const { report, loading, getReportByID, getResumePdf } = useInterview()
   
   const [activeSection, setActiveSection] = useState('technical')
   const [selectedQuestion, setSelectedQuestion] = useState(0)
@@ -39,6 +39,17 @@ const Interview = () => {
     setAnswer('')
   }
 
+  const handleGenerateResume = async () => {
+    if (report?._id) {
+      try {
+        await getResumePdf(report._id)
+      } catch (error) {
+        console.error('Failed to generate resume:', error)
+        // You could add a toast notification here
+      }
+    }
+  }
+
   if (loading || !report) {
     return (
       <div className="interview-loading">
@@ -62,9 +73,28 @@ const Interview = () => {
               </svg>
               Back
             </button>
-            <div className="match-score">
-              <span className="score-label">Match Score</span>
-              <span className="score-value">{report?.matchScore}%</span>
+            
+            <div className="header-actions">
+              <div className="match-score">
+                <span className="score-label">Match Score</span>
+                <span className="score-value">{report?.matchScore}%</span>
+              </div>
+              
+              <button 
+                className="generate-resume-btn" 
+                onClick={handleGenerateResume}
+                disabled={loading || !report?._id}
+                title="Generate AI Resume"
+              >
+                {loading ? (
+                  <div className="spinner-small"></div>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                Generate Resume
+              </button>
             </div>
           </div>
 

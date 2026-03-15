@@ -29,5 +29,11 @@ interviewRouter.get("/report/:interviewId", authMiddlewares.authUser, interviewC
  * @access Private
  */
 interviewRouter.get("/", authMiddlewares.authUser, interviewController.getAllInterviewReportsController);
+/**
+ * @route Post api/interview/resume/pdf/:interviewReportId
+ * @desc Generate a comprehensive interview report based on the candidate's resume, self-description, and job description.
+ * @access Private
+ */
+  interviewRouter.post("/resume/pdf/:interviewReportId", authMiddlewares.authUser, interviewController.generateResumePdfController);
 
 export default interviewRouter;

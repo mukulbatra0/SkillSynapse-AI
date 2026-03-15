@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import './Home.scss'
 import { useInterview } from '../hooks/useInterview'
 
 const Home = () => {
-  const { generateReport, loading } = useInterview()
+  const { generateReport, loading, getAllReports, interviewReports } = useInterview()
 
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -14,6 +14,11 @@ const Home = () => {
   })
   const [resumeFileName, setResumeFileName] = useState('')
   const [errors, setErrors] = useState({})
+
+  // Fetch all reports on component mount
+  useEffect(() => {
+    getAllReports()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -90,6 +95,21 @@ const Home = () => {
     document.getElementById('resume').click()
   }
 
+  const handleReportClick = (reportId) => {
+    navigate(`/interview/${reportId}`)
+  }
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
   return (
     <main className='home'>
       <div className="home-container">
@@ -97,6 +117,57 @@ const Home = () => {
           <h1>AI Interview Preparation</h1>
           <p>Prepare for your dream job with AI-powered interview practice</p>
         </header>
+
+        {/* Previous Reports Section */}
+        {interviewReports && interviewReports.length > 0 && (
+          <section className="reports-section">
+            <div className="reports-header">
+              <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h2>Your Interview Reports</h2>
+              <span className="report-count">{interviewReports.length}</span>
+            </div>
+            <div className="reports-grid">
+              {interviewReports.map((report) => (
+                <div 
+                  key={report._id} 
+                  className="report-card"
+                  onClick={() => handleReportClick(report._id)}
+                >
+                  <div className="report-card-header">
+                    <div className="report-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="report-date">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {formatDate(report.createdAt)}
+                    </div>
+                  </div>
+                  <div className="report-card-content">
+                    <h3>Interview Report</h3>
+                    <p className="report-description">
+                      {report.jobDescription?.substring(0, 100)}
+                      {report.jobDescription?.length > 100 ? '...' : ''}
+                    </p>
+                  </div>
+                  <div className="report-card-footer">
+                    <span className="view-report">
+                      View Report
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <form className="home-form" onSubmit={handleSubmit}>
           <div className="form-grid">
