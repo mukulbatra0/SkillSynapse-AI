@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import './Home.scss'
 import { useInterview } from '../hooks/useInterview'
+import { useAuth } from '../../auth/hooks/useAuth'
 
 const Home = () => {
+  const { handleLogout } = useAuth()
   const { generateReport, loading, getAllReports, interviewReports } = useInterview()
 
   const navigate = useNavigate()
@@ -14,6 +16,7 @@ const Home = () => {
   })
   const [resumeFileName, setResumeFileName] = useState('')
   const [errors, setErrors] = useState({})
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Fetch all reports on component mount
   useEffect(() => {
@@ -113,13 +116,28 @@ const Home = () => {
   return (
     <main className='home'>
       <div className="home-container">
-        <header className="home-header">
-          <h1>AI Interview Preparation</h1>
-          <p>Prepare for your dream job with AI-powered interview practice</p>
-        </header>
+        <nav className="home-navbar">
+          <div className="nav-left">
+            <button className="menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="nav-brand-logo">SkillSynapse<span>AI</span></div>
+          </div>
+          <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </nav>
 
-        {/* Previous Reports Section */}
-        {interviewReports && interviewReports.length > 0 && (
+        <div className="home-content-wrapper">
+          {/* Sidebar */}
+          <aside className={`home-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+            <div className="reports-section-container">
+              {interviewReports && interviewReports.length > 0 ? (
           <section className="reports-section">
             <div className="reports-header">
               <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -166,11 +184,22 @@ const Home = () => {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+            </section>
+              ) : (
+                <div className="no-reports" style={{padding: '1.5rem', color: '#18392b', fontSize: '0.9rem'}}>No previous reports found.</div>
+              )}
+            </div>
+          </aside>
 
-        <form className="home-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
+          {/* Main Content */}
+          <div className="home-main">
+            <header className="home-header">
+              <h1>AI Interview Preparation</h1>
+              <p>Prepare for your dream job with AI-powered interview practice</p>
+            </header>
+
+            <form className="home-form" onSubmit={handleSubmit}>
+              <div className="form-grid">
             {/* Left Section - Job Description */}
             <div className="form-section">
               <div className="section-header">
@@ -289,6 +318,8 @@ const Home = () => {
             )}
           </button>
         </form>
+        </div>
+      </div>
       </div>
     </main>
   )

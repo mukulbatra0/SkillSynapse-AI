@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import './Interview.scss'
 import { useInterview } from '../hooks/useInterview'
+import Loading from '../../../components/Loading'
 
 const Interview = () => {
   const { interviewId } = useParams()
@@ -51,12 +52,7 @@ const Interview = () => {
   }
 
   if (loading || !report) {
-    return (
-      <div className="interview-loading">
-        <div className="spinner-large"></div>
-        <p>Loading interview data...</p>
-      </div>
-    )
+    return <Loading message="Loading interview data..." fullScreen={true} size="large" />
   }
 
   const currentQuestions = getCurrentQuestions()
@@ -153,34 +149,27 @@ const Interview = () => {
                     <div className="question-number">Q{index + 1}</div>
                     <div className="question-content">
                       <p className="question-text">{q.question}</p>
-                      <span className="question-tag">{q.intention}</span>
+                      {selectedQuestion !== index && (
+                        <span className="question-tag">{q.intention}</span>
+                      )}
+                      
+                      {selectedQuestion === index && (
+                        <div className="question-details">
+                          <div className="detail-group">
+                            <h4>🎯 Intention</h4>
+                            <p>{q.intention}</p>
+                          </div>
+                          <div className="detail-group">
+                            <h4>💡 Suggested Answer</h4>
+                            <p>{q.answer}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
 
-              {currentQuestions[selectedQuestion] && (
-                <div className="answer-section">
-                  <h3>Your Answer</h3>
-                  <textarea
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Type your answer here..."
-                    rows={6}
-                  />
-                  <div className="answer-actions">
-                    <button className="btn-secondary" onClick={() => setAnswer('')}>
-                      Clear
-                    </button>
-                    <button className="btn-primary" onClick={handleAnswerSubmit}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Submit Answer
-                    </button>
-                  </div>
-                </div>
-              )}
             </>
           ) : (
             <>
@@ -209,10 +198,10 @@ const Interview = () => {
         {/* Right Sidebar - Skill Gaps */}
         <aside className="interview-sidebar-right">
           <div className="skill-gaps-section">
-            <h3>Skill Gaps</h3>
+            <h3>🎯 Skill Gaps</h3>
             <div className="skill-gaps-list">
               {report?.skillGaps?.map((gap, index) => (
-                <div key={index} className={`skill-gap-item severity-${gap.severity}`}>
+                <div key={index} className={`skill-gap-item severity-${gap.severity?.toLowerCase() || 'medium'}`}>
                   <span className="skill-name">{gap.skill}</span>
                   <span className="severity-badge">{gap.severity}</span>
                 </div>
@@ -221,7 +210,7 @@ const Interview = () => {
           </div>
 
           <div className="tips-section">
-            <h3>Interview Tips</h3>
+            <h3>💡 Interview Tips</h3>
             <div className="tip-card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import "../auth.form.scss"
 import { Link,useNavigate } from 'react-router'
 import {useAuth} from "../hooks/useAuth"
+import Loading from "../../../components/Loading"
 
 const Login = () => {
   const navigate = useNavigate()
@@ -20,13 +21,14 @@ const Login = () => {
   
 
   if(loading){
-    return(<main>Loading........</main>)
+    return <Loading message="Signing in..." fullScreen={true} />
   }
 
 
   return (
     <main>
       <div className="login-container">
+        <div className="brand-logo">SkillSynapse<span>AI</span></div>
         <h1>Login</h1>
         <form className="login-form" onSubmit={handelSubmit}>
         <div className="input-group">

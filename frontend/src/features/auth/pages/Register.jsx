@@ -1,6 +1,8 @@
 import {useState} from "react";
 import { useNavigate,Link } from "react-router";
 import { useAuth } from "../hooks/useAuth";
+import Loading from "../../../components/Loading";
+import "../auth.form.scss"; // added for styling
 
 const Register = () => {
   const navigate = useNavigate();
@@ -17,12 +19,13 @@ const Register = () => {
   
 
   if(loading){
-    return(<main>Loading........</main>)
+    return <Loading message="Creating your account..." fullScreen={true} />
   }
 
   return (
     <main>
-      <div className="login-container">
+      <div className="login-container register-container">
+        <div className="brand-logo">SkillSynapse<span>AI</span></div>
         <h1>Register</h1>
         <form className="login-form" onSubmit={handelSubmit}>
 
