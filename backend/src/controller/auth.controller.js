@@ -53,6 +53,7 @@ async function registerUserController(req, res){
 
   res.status(201).json({
     message: "User registered successfully",
+    token, // Send token in response body
     user:{
       id: newUser._id,
       username: newUser.username,
@@ -106,6 +107,7 @@ async function loginUserController(req, res){
 
   res.status(200).json({
     message: "User logged in successfully",
+    token, // Send token in response body
     user:{
       id: user._id,
       username: user.username,
@@ -116,7 +118,12 @@ async function loginUserController(req, res){
 }
 
 async function logoutUserController(req, res){
-  const token = req.cookies.token
+  // Get token from Authorization header or cookie
+  let token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    token = req.cookies.token;
+  }
 
   if(!token){
     return res.status(400).json({
