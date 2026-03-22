@@ -55,10 +55,8 @@ const sanitizeQuestions = (questions) => {
  * @access Private
  */
 async function generateInterviewReportController(req, res) {
-
-
   const resumeFile = req.file;
-   const parser = new PDFParse({ data: resumeFile.buffer });
+  const parser = new PDFParse({ data: resumeFile.buffer });
   
   // Extract text
   const resumeContent = await parser.getText();
@@ -67,12 +65,11 @@ async function generateInterviewReportController(req, res) {
   await parser.destroy();
   const { selfDescription, jobDescription } = req.body;
 
-
   const interviewReportByAi = await generateResumeReport({
-    resume: resumeContent.text,//ec
+    resume: resumeContent.text,
     selfDescription,
     jobDescription
-}) 
+  });
   
   // Sanitize the AI response to ensure proper structure
   const sanitizedReport = {
@@ -90,13 +87,12 @@ async function generateInterviewReportController(req, res) {
     selfDescription,
     jobDescription,
     ...sanitizedReport
-  })
+  });
 
   res.status(201).json({
     message: "Interview report generated successfully",
     interviewReport
-  })
-
+  });
 }
 
 /**

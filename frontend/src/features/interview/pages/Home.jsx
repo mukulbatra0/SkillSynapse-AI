@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/hooks/useAuth'
 
 const Home = () => {
   const { handleLogout } = useAuth()
-  const { generateReport, loading, getAllReports, interviewReports } = useInterview()
+  const { generateReport, loading, getAllReports, interviewReports, progress, progressMessage } = useInterview()
 
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -305,8 +305,10 @@ const Home = () => {
           >
             {loading ? (
               <>
-                <span className="spinner"></span>
-                Generating...
+                <div className="progress-container">
+                  <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+                  <span className="progress-text">{progress}% - {progressMessage}</span>
+                </div>
               </>
             ) : (
               <>

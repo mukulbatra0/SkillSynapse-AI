@@ -1,5 +1,5 @@
 import {generateInterviewReport , getAllInterviewReports,getInterviewReportByID, generateResumePdf} from "../services/interview.api.js";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { InterviewContext } from "../interview.context";
 
 
@@ -9,19 +9,35 @@ export const useInterview = () => {
         throw new Error("useInterview must be used within an InterviewProvider");
     }
     const { interviewReports, setInterviewReports, loading, setLoading, report, setReport } = context;
+    const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState('');
 
     const generateReport = async ({jobDescription ,  selfDescription , resumeFile}) => {
       setLoading(true);
+      setProgress(0);
+      setProgressMessage('Starting...');
+      
       try {
-        const response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile });
+        const response = await generateInterviewReport({ 
+          jobDescription, 
+          selfDescription, 
+          resumeFile,
+          onProgress: (progressData) => {
+            setProgress(progressData.progress);
+            setProgressMessage(progressData.message);
+          }
+        });
+        
         setReport(response.interviewReport);
         setInterviewReports(prev => [response.interviewReport, ...prev])
         return response.interviewReport;
       } catch (error) {
         console.error("Error generating interview report:", error);
+        setProgressMessage('Error generating report');
         throw error;
       } finally {
         setLoading(false);
+        setProgress(0);
       }
 
     }
@@ -76,6 +92,8 @@ export const useInterview = () => {
     interviewReports,
     loading,
     report,
+    progress,
+    progressMessage,
     generateReport,
     getAllReports,
     getReportByID,
