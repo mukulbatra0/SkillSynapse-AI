@@ -82,6 +82,16 @@ export const useInterview = () => {
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Error generating resume PDF:", error);
+        
+        // Show user-friendly error message
+        let errorMessage = "Failed to generate resume PDF. Please try again.";
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        alert(errorMessage); // You can replace this with a toast notification
       } finally {
         setLoading(false);
       }

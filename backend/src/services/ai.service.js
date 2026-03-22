@@ -113,29 +113,47 @@ Requirements:
 }
 
 async function generatePdf(htmlContent) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
-  });
-  const page = await browser.newPage();
-  await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
-  const pdfBuffer = await page.pdf({ 
-    format: 'A4',
-    printBackground: true,
-    preferCSSPageSize: true
-  });
-  await browser.close();
-  return pdfBuffer;
+  let browser;
+  try {
+    console.log('Launching Puppeteer browser...');
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
+    });
+    console.log('Browser launched successfully');
+    
+    const page = await browser.newPage();
+    console.log('Setting HTML content...');
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    
+    console.log('Generating PDF...');
+    const pdfBuffer = await page.pdf({ 
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true
+    });
+    console.log('PDF generated successfully');
+    
+    return pdfBuffer;
+  } catch (error) {
+    console.error('Error in generatePdf:', error);
+    throw new Error(`PDF generation failed: ${error.message}`);
+  } finally {
+    if (browser) {
+      await browser.close();
+      console.log('Browser closed');
+    }
+  }
 }
 
 async function genrateResumePdf({resume , selfDescription , jobDescription}) {
@@ -169,6 +187,7 @@ Return format:
 }`;
 
   try {
+    console.log('Calling OpenAI API for resume generation...');
     const completion = await client.chat.completions.create({
       model: "qwen/qwen3.5-122b-a10b",
       messages: [{ role: "user", content: prompt }],
@@ -178,6 +197,7 @@ Return format:
     });
 
     const responseText = completion.choices[0].message.content.trim();
+    console.log('Received AI response, parsing JSON...');
     
     // Remove markdown code blocks if present
     let cleanedText = responseText;
@@ -188,14 +208,29 @@ Return format:
     }
     
     const jsonContent = JSON.parse(cleanedText);
+    
+    if (!jsonContent.html) {
+      throw new Error('AI response missing HTML content');
+    }
+    
+    console.log('JSON parsed successfully, generating PDF...');
     const pdfBuffer = await generatePdf(jsonContent.html);
+    console.log('Resume PDF generated successfully');
     return pdfBuffer;
   } catch (error) {
     console.error("Error generating resume PDF:", error);
+    console.error("Error stack:", error.stack);
+    
     if (error instanceof SyntaxError) {
       throw new Error("Failed to parse AI response. Please try again.");
     }
-    throw error;
+    if (error.message?.includes('timeout')) {
+      throw new Error("AI service timeout. Please try again.");
+    }
+    if (error.message?.includes('PDF generation failed')) {
+      throw error; // Re-throw with original message
+    }
+    throw new Error(`Resume generation failed: ${error.message}`);
   }
 }
 export {generateResumeReport , genrateResumePdf};

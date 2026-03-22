@@ -163,12 +163,30 @@ async function getAllInterviewReportsController(req, res) {
 async function generateResumePdfController(req, res) {
   try {
     const {interviewReportId} = req.params;
+    console.log(`Generating PDF for interview report: ${interviewReportId}`);
+    
     const interviewReport = await InterviewReport.findOne({ _id: interviewReportId, user: req.user.id });
 
     if(!interviewReport) {
+      console.log(`Interview report not found: ${interviewReportId}`);
       return res.status(404).json({ message: "Interview report not found" });
     }
+    
     const { resume, selfDescription, jobDescription } = interviewReport;
+    
+    if (!resume || !selfDescription || !jobDescription) {
+      console.log('Missing required fields in interview report');
+      return res.status(400).json({ 
+        message: "Interview report is incomplete. Missing required fields.",
+        missing: {
+          resume: !resume,
+          selfDescription: !selfDescription,
+          jobDescription: !jobDescription
+        }
+      });
+    }
+    
+    console.log('Calling genrateResumePdf service...');
     const pdfBuffer = await genrateResumePdf({resume, selfDescription, jobDescription});
 
     res.set({
@@ -176,12 +194,15 @@ async function generateResumePdfController(req, res) {
       'Content-Disposition': `attachment; filename=resume_${interviewReportId}.pdf`,
       'Content-Length': pdfBuffer.length
     });
+    console.log('PDF sent successfully');
     res.send(pdfBuffer);
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('Error in generateResumePdfController:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       message: "Failed to generate PDF",
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
