@@ -15,64 +15,44 @@ api.interceptors.request.use((config) => {
 });
 
 export async function register({ username, email, password }) {
-  try {
-    const response = await api.post("/api/auth/register", {
-      username,
-      email,
-      password,
-    });
-    
-    // Store token in localStorage
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
-    
-    return response.data;
-  } catch (err) {
-    console.log(err);
-    throw err;
+  const response = await api.post("/api/auth/register", {
+    username,
+    email,
+    password,
+  });
+  
+  // Store token in localStorage
+  if (response.data.token) {
+    localStorage.setItem('token', response.data.token);
   }
+  
+  return response.data;
 }
 
 export async function login({ email, password }) {
-  try {
-    const response = await api.post("/api/auth/login", {
-      email,
-      password,
-    });
+  const response = await api.post("/api/auth/login", {
+    email,
+    password,
+  });
 
-    // Store token in localStorage
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
-
-    return response.data;
-  } catch (err) {
-    console.log(err);
-    throw err;
+  // Store token in localStorage
+  if (response.data.token) {
+    localStorage.setItem('token', response.data.token);
   }
+
+  return response.data;
 }
 
 export async function logout() {
-  try {
-    const response = await api.get("/api/auth/logout");
-    
-    // Remove token from localStorage
-    localStorage.removeItem('token');
-    
-    return response.data;
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
+  const response = await api.get("/api/auth/logout");
+  
+  // Remove token from localStorage
+  localStorage.removeItem('token');
+  
+  return response.data;
 }
 
 export async function getMe() {
-  try {
-    const response = await api.get("/api/auth/get-me");
-    return response.data;
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
+  const response = await api.get("/api/auth/get-me");
+  return response.data;
 }

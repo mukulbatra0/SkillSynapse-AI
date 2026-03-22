@@ -44,10 +44,22 @@ export const useAuth = () => {
 
 useEffect(() => {
   const getandsetUser = async () => {
+    // Check if token exists before making the request
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const data = await getMe();
       setUser(data?.user || null);
     } catch (err) {
+      console.error('Error fetching user:', err);
+      // If token is invalid, remove it
+      localStorage.removeItem('token');
       setUser(null);
     } finally {
       setLoading(false);

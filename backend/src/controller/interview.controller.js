@@ -55,44 +55,59 @@ const sanitizeQuestions = (questions) => {
  * @access Private
  */
 async function generateInterviewReportController(req, res) {
-  const resumeFile = req.file;
-  const parser = new PDFParse({ data: resumeFile.buffer });
-  
-  // Extract text
-  const resumeContent = await parser.getText();
-  
-  // Clean up (optional but recommended)
-  await parser.destroy();
-  const { selfDescription, jobDescription } = req.body;
+  try {
+    const resumeFile = req.file;
+    
+    if (!resumeFile) {
+      return res.status(400).json({
+        message: "Resume file is required"
+      });
+    }
+    
+    const parser = new PDFParse({ data: resumeFile.buffer });
+    
+    // Extract text
+    const resumeContent = await parser.getText();
+    
+    // Clean up (optional but recommended)
+    await parser.destroy();
+    const { selfDescription, jobDescription } = req.body;
 
-  const interviewReportByAi = await generateResumeReport({
-    resume: resumeContent.text,
-    selfDescription,
-    jobDescription
-  });
-  
-  // Sanitize the AI response to ensure proper structure
-  const sanitizedReport = {
-    ...interviewReportByAi,
-    technicalQuestions: sanitizeQuestions(interviewReportByAi.technicalQuestions),
-    behavioralQuestions: sanitizeQuestions(interviewReportByAi.behavioralQuestions),
-    skillGaps: sanitizeSkillGaps(interviewReportByAi.skillGaps),
-    preparationPlan: sanitizePrepPlan(interviewReportByAi.preparationPlan)
-  };
+    const interviewReportByAi = await generateResumeReport({
+      resume: resumeContent.text,
+      selfDescription,
+      jobDescription
+    });
+    
+    // Sanitize the AI response to ensure proper structure
+    const sanitizedReport = {
+      ...interviewReportByAi,
+      technicalQuestions: sanitizeQuestions(interviewReportByAi.technicalQuestions),
+      behavioralQuestions: sanitizeQuestions(interviewReportByAi.behavioralQuestions),
+      skillGaps: sanitizeSkillGaps(interviewReportByAi.skillGaps),
+      preparationPlan: sanitizePrepPlan(interviewReportByAi.preparationPlan)
+    };
 
-  // Save the interview report to the database
-  const interviewReport = await InterviewReport.create({
-    user: req.user.id,
-    resume: resumeContent.text,
-    selfDescription,
-    jobDescription,
-    ...sanitizedReport
-  });
+    // Save the interview report to the database
+    const interviewReport = await InterviewReport.create({
+      user: req.user.id,
+      resume: resumeContent.text,
+      selfDescription,
+      jobDescription,
+      ...sanitizedReport
+    });
 
-  res.status(201).json({
-    message: "Interview report generated successfully",
-    interviewReport
-  });
+    res.status(201).json({
+      message: "Interview report generated successfully",
+      interviewReport
+    });
+  } catch (error) {
+    console.error('Error generating interview report:', error);
+    res.status(500).json({
+      message: "Failed to generate interview report",
+      error: error.message
+    });
+  }
 }
 
 /**
@@ -102,17 +117,25 @@ async function generateInterviewReportController(req, res) {
  */
 
 async function getInterviewReportByIDController(req, res) {
-  const { interviewId } = req.params;
-  const interviewReport = await InterviewReport.findOne({ _id: interviewId, user: req.user.id });
+  try {
+    const { interviewId } = req.params;
+    const interviewReport = await InterviewReport.findOne({ _id: interviewId, user: req.user.id });
 
-  if(!interviewReport) {
-    return res.status(404).json({ message: "Interview report not found" });
+    if(!interviewReport) {
+      return res.status(404).json({ message: "Interview report not found" });
+    }
+
+    res.status(200).json({
+      message: "Interview report retrieved successfully",
+      interviewReport
+    })
+  } catch (error) {
+    console.error('Error fetching interview report:', error);
+    res.status(500).json({
+      message: "Failed to fetch interview report",
+      error: error.message
+    });
   }
-
-  res.status(200).json({
-    message: "Interview report retrieved successfully",
-    interviewReport
-  })
 }
 
 /**
@@ -122,30 +145,45 @@ async function getInterviewReportByIDController(req, res) {
  */
 
 async function getAllInterviewReportsController(req, res) {
-  const interviewReports = await InterviewReport.find({ user: req.user.id }).sort({ createdAt: -1 }).select("-resume -selfDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"); // Exclude large text fields for listing
+  try {
+    const interviewReports = await InterviewReport.find({ user: req.user.id }).sort({ createdAt: -1 }).select("-resume -selfDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"); // Exclude large text fields for listing
 
-  res.status(200).json({
-    message: "Interview reports retrieved successfully",
-    interviewReports
-  })
+    res.status(200).json({
+      message: "Interview reports retrieved successfully",
+      interviewReports
+    })
+  } catch (error) {
+    console.error('Error fetching interview reports:', error);
+    res.status(500).json({
+      message: "Failed to fetch interview reports",
+      error: error.message
+    });
+  }
 }
 async function generateResumePdfController(req, res) {
-  const {interviewReportId} = req.params;
-  const interviewReport = await InterviewReport.findOne({ _id: interviewReportId, user: req.user.id });
+  try {
+    const {interviewReportId} = req.params;
+    const interviewReport = await InterviewReport.findOne({ _id: interviewReportId, user: req.user.id });
 
-  if(!interviewReport) {
-    return res.status(404).json({ message: "Interview report not found" });
+    if(!interviewReport) {
+      return res.status(404).json({ message: "Interview report not found" });
+    }
+    const { resume, selfDescription, jobDescription } = interviewReport;
+    const pdfBuffer = await genrateResumePdf({resume, selfDescription, jobDescription});
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=resume_${interviewReportId}.pdf`,
+      'Content-Length': pdfBuffer.length
+    });
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({
+      message: "Failed to generate PDF",
+      error: error.message
+    });
   }
-  const { resume, selfDescription, jobDescription } = interviewReport;
-  const pdfBuffer = await genrateResumePdf({resume, selfDescription, jobDescription});
-
-  res.set({
-    'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename=resume_${interviewReportId}.pdf`,
-    'Content-Length': pdfBuffer.length
-  });
-  res.send(pdfBuffer);
-
 }
 
 export default{
