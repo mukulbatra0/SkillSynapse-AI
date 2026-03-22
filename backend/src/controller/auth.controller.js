@@ -43,7 +43,13 @@ async function registerUserController(req, res){
   }, process.env.JWT_SECRET, {expiresIn: "1d"}
   )
 
-  res.cookie("token", token)
+  // Set cookie with proper options for cross-domain
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  })
 
   res.status(201).json({
     message: "User registered successfully",
@@ -90,7 +96,13 @@ async function loginUserController(req, res){
   }, process.env.JWT_SECRET, {expiresIn: "1d"}
   )
 
-  res.cookie("token", token)
+  // Set cookie with proper options for cross-domain
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  })
 
   res.status(200).json({
     message: "User logged in successfully",
@@ -118,7 +130,11 @@ async function logoutUserController(req, res){
     })
   }
 
-  res.clearCookie("token")
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  })
   res.status(200).json({
     message: "User logged out successfully"
   })
