@@ -134,8 +134,18 @@ const Home = () => {
         </nav>
 
         <div className="home-content-wrapper">
+          {/* Sidebar Overlay for mobile */}
+          {isSidebarOpen && (
+            <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+          )}
+
           {/* Sidebar */}
           <aside className={`home-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+            <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <div className="reports-section-container">
               {interviewReports && interviewReports.length > 0 ? (
           <section className="reports-section">

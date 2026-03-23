@@ -12,6 +12,7 @@ const Interview = () => {
   const [activeSection, setActiveSection] = useState('technical')
   const [selectedQuestion, setSelectedQuestion] = useState(0)
   const [answer, setAnswer] = useState('')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (interviewId) {
@@ -60,8 +61,18 @@ const Interview = () => {
   return (
     <main className="interview">
       <div className="interview-container">
+        {/* Sidebar Overlay for mobile */}
+        {isSidebarOpen && (
+          <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+        )}
+
         {/* Left Sidebar - Navigation */}
-        <aside className="interview-sidebar">
+        <aside className={`interview-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
+          <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
           <div className="sidebar-header">
             <button className="back-btn" onClick={() => navigate(-1)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -97,7 +108,7 @@ const Interview = () => {
           <nav className="sidebar-nav">
             <button 
               className={`nav-item ${activeSection === 'technical' ? 'active' : ''}`}
-              onClick={() => { setActiveSection('technical'); setSelectedQuestion(0); }}
+              onClick={() => { setActiveSection('technical'); setSelectedQuestion(0); setIsSidebarOpen(false); }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -108,7 +119,7 @@ const Interview = () => {
 
             <button 
               className={`nav-item ${activeSection === 'behavioral' ? 'active' : ''}`}
-              onClick={() => { setActiveSection('behavioral'); setSelectedQuestion(0); }}
+              onClick={() => { setActiveSection('behavioral'); setSelectedQuestion(0); setIsSidebarOpen(false); }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -119,7 +130,7 @@ const Interview = () => {
 
             <button 
               className={`nav-item ${activeSection === 'roadmap' ? 'active' : ''}`}
-              onClick={() => setActiveSection('roadmap')}
+              onClick={() => { setActiveSection('roadmap'); setIsSidebarOpen(false); }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -226,6 +237,53 @@ const Interview = () => {
           </div>
         </aside>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-bottom-nav">
+        <div className="nav-container">
+          <div className="nav-items">
+            <button 
+              className={`nav-item-btn ${activeSection === 'technical' ? 'active' : ''}`}
+              onClick={() => { setActiveSection('technical'); setSelectedQuestion(0); }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              <span>Technical</span>
+            </button>
+
+            <button 
+              className={`nav-item-btn ${activeSection === 'behavioral' ? 'active' : ''}`}
+              onClick={() => { setActiveSection('behavioral'); setSelectedQuestion(0); }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Behavioral</span>
+            </button>
+
+            <button 
+              className={`nav-item-btn ${activeSection === 'roadmap' ? 'active' : ''}`}
+              onClick={() => { setActiveSection('roadmap'); }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              <span>Roadmap</span>
+            </button>
+
+            <button 
+              className="nav-item-btn"
+              onClick={() => navigate(-1)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Home</span>
+            </button>
+          </div>
+        </div>
+      </nav>
     </main>
   )
 }

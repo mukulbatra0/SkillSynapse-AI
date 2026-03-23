@@ -144,6 +144,11 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
+    position: relative;
+
+    .sidebar-close-btn {
+      display: none;
+    }
 
     &.open {
       width: 350px;
@@ -809,6 +814,15 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes moveBackground {
   0% {
     transform: translate(0, 0);
@@ -858,25 +872,113 @@
 }
 
 // Responsive Design
+@media (max-width: 1200px) {
+  .home {
+    .home-sidebar.open {
+      width: 300px;
+    }
+
+    .home-form {
+      .form-grid {
+        gap: 1.75rem;
+      }
+    }
+  }
+}
+
 @media (max-width: 1024px) {
   .home {
-    .home-header {
-      h1 {
-        font-size: 2rem;
+    .home-container {
+      padding-bottom: 1.5rem;
+    }
+
+    .home-navbar {
+      padding: 0.875rem 1.25rem;
+      margin-bottom: 1.5rem;
+      border-radius: 30px;
+
+      .nav-left {
+        gap: 1rem;
+
+        .menu-btn {
+          width: 40px;
+          height: 40px;
+
+          svg {
+            width: 22px;
+            height: 22px;
+          }
+        }
+
+        .nav-brand-logo {
+          font-size: 1.3rem;
+        }
+      }
+
+      .logout-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
       }
     }
 
-    .reports-section {
-      .reports-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    .home-sidebar.open {
+      width: 280px;
+    }
+
+    .home-header {
+      margin-bottom: 1.5rem;
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 0.95rem;
       }
     }
 
     .home-form {
       padding: 1.5rem;
+      border-radius: 28px;
 
       .form-grid {
         gap: 1.5rem;
+      }
+
+      .form-section {
+        .section-header {
+          .icon {
+            width: 20px;
+            height: 20px;
+          }
+
+          h2 {
+            font-size: 1rem;
+          }
+        }
+
+        .input-group {
+          textarea {
+            min-height: 180px;
+            padding: 1rem;
+            font-size: 0.9rem;
+          }
+        }
+
+        .file-upload-area {
+          padding: 2rem 1rem;
+        }
+      }
+
+      .submit-btn {
+        min-width: 240px;
+        padding: 0.9rem 2rem;
+        font-size: 1rem;
       }
     }
   }
@@ -884,11 +986,351 @@
 
 @media (max-width: 768px) {
   .home {
-    padding: 0.75rem;
+    padding: 0.5rem;
+
+    .home-container {
+      padding-bottom: 1rem;
+    }
+
+    .sidebar-overlay {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .home-navbar {
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: 24px;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+
+      .nav-left {
+        gap: 0.75rem;
+
+        .menu-btn {
+          width: 36px;
+          height: 36px;
+          border-radius: 18px;
+
+          svg {
+            width: 20px;
+            height: 20px;
+          }
+        }
+
+        .nav-brand-logo {
+          font-size: 1.1rem;
+        }
+      }
+
+      .logout-btn {
+        padding: 0.45rem 0.875rem;
+        font-size: 0.8rem;
+        border-radius: 16px;
+
+        svg {
+          width: 13px;
+          height: 13px;
+        }
+      }
+    }
+
+    .home-content-wrapper {
+      gap: 1rem;
+    }
+
+    .home-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 0;
+      box-shadow: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.open {
+        width: 85%;
+        max-width: 320px;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .sidebar-close-btn {
+        display: none;
+
+        @media (max-width: 768px) {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          z-index: 10;
+
+          svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          &:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(1.1);
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
+      }
+
+      .reports-section-container {
+        width: 100%;
+        padding: 3.5rem 1rem 1rem;
+      }
+
+      .reports-section {
+        padding: 1rem;
+        border-radius: 24px;
+
+        .reports-header {
+          padding-bottom: 0.5rem;
+          margin-bottom: 0.5rem;
+
+          .icon {
+            width: 18px;
+            height: 18px;
+          }
+
+          h2 {
+            font-size: 0.9rem;
+          }
+
+          .report-count {
+            padding: 0.15rem 0.5rem;
+            font-size: 0.7rem;
+          }
+        }
+
+        .reports-grid {
+          gap: 0.625rem;
+
+          .report-card {
+            padding: 0.875rem;
+            border-radius: 20px;
+
+            .report-card-header {
+              .report-icon {
+                width: 32px;
+                height: 32px;
+
+                svg {
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+
+              .report-date {
+                font-size: 0.65rem;
+
+                svg {
+                  width: 11px;
+                  height: 11px;
+                }
+              }
+            }
+
+            .report-card-content {
+              h3 {
+                font-size: 0.85rem;
+                margin-bottom: 0.3rem;
+              }
+
+              .report-description {
+                font-size: 0.75rem;
+              }
+            }
+
+            .report-card-footer {
+              padding-top: 0.5rem;
+
+              .view-report {
+                font-size: 0.75rem;
+
+                svg {
+                  width: 12px;
+                  height: 12px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .home-main {
+      padding-right: 0;
+    }
 
     .home-header {
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
 
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      p {
+        font-size: 0.85rem;
+      }
+    }
+
+    .home-form {
+      padding: 1.25rem;
+      border-radius: 24px;
+
+      .form-grid {
+        gap: 1.25rem;
+      }
+
+      .form-section {
+        gap: 1rem;
+
+        .section-header {
+          gap: 0.5rem;
+
+          .icon {
+            width: 18px;
+            height: 18px;
+          }
+
+          h2 {
+            font-size: 0.95rem;
+          }
+        }
+
+        .input-group {
+          gap: 0.4rem;
+
+          textarea {
+            min-height: 150px;
+            max-height: 250px;
+            padding: 0.875rem;
+            font-size: 0.85rem;
+            border-radius: 16px;
+          }
+
+          .error-message {
+            font-size: 0.8rem;
+          }
+        }
+
+        .file-upload-area {
+          padding: 1.75rem 0.875rem;
+          border-radius: 16px;
+
+          .upload-prompt {
+            gap: 0.5rem;
+
+            .upload-icon {
+              width: 30px;
+              height: 30px;
+            }
+
+            span {
+              font-size: 0.85rem;
+            }
+          }
+
+          .file-info {
+            gap: 0.5rem;
+
+            .file-icon {
+              width: 28px;
+              height: 28px;
+            }
+
+            .file-name {
+              font-size: 0.85rem;
+            }
+          }
+        }
+      }
+
+      .submit-error {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        border-radius: 14px;
+
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .submit-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 0.875rem 1.5rem;
+        font-size: 0.95rem;
+        border-radius: 24px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+
+        .progress-container {
+          min-width: auto;
+          height: 36px;
+
+          .progress-text {
+            font-size: 0.8rem;
+            padding: 0 0.75rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .home {
+    .home-navbar {
+      padding: 0.625rem 0.75rem;
+
+      .nav-left {
+        .nav-brand-logo {
+          font-size: 1rem;
+        }
+      }
+
+      .logout-btn {
+        span {
+          display: none;
+        }
+        padding: 0.5rem;
+        border-radius: 50%;
+      }
+    }
+
+    .home-header {
       h1 {
         font-size: 1.5rem;
       }
@@ -898,32 +1340,63 @@
       }
     }
 
-    .reports-section {
-      padding: 0.875rem;
-      max-height: 160px;
+    .home-form {
+      padding: 1rem;
+      border-radius: 20px;
 
-      .reports-header {
-        h2 {
-          font-size: 0.95rem;
+      .form-section {
+        .section-header {
+          h2 {
+            font-size: 0.9rem;
+          }
+        }
+
+        .input-group {
+          textarea {
+            min-height: 130px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+          }
+        }
+
+        .file-upload-area {
+          padding: 1.5rem 0.75rem;
+
+          .upload-prompt {
+            .upload-icon {
+              width: 26px;
+              height: 26px;
+            }
+
+            span {
+              font-size: 0.8rem;
+            }
+          }
+
+          .file-info {
+            .file-icon {
+              width: 24px;
+              height: 24px;
+            }
+
+            .file-name {
+              font-size: 0.8rem;
+            }
+          }
         }
       }
 
-      .reports-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-      }
-    }
-
-    .home-form {
-      padding: 1rem;
-
-      .form-grid {
-        gap: 1rem;
-      }
-
       .submit-btn {
-        width: 100%;
-        padding: 0.875rem 1.5rem;
+        padding: 0.8rem 1.25rem;
+        font-size: 0.9rem;
+
+        .progress-container {
+          height: 32px;
+
+          .progress-text {
+            font-size: 0.75rem;
+          }
+        }
       }
     }
   }

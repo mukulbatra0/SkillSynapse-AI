@@ -148,10 +148,109 @@ main {
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    &::before {
+      width: 400px;
+      height: 400px;
+      top: -100px;
+      left: -100px;
+    }
+
+    &::after {
+      width: 300px;
+      height: 300px;
+      bottom: -80px;
+      right: -80px;
+    }
+
     .login-container {
-      min-width: 90%;
-      padding: 2.5rem 1.5rem;
+      min-width: 100%;
+      max-width: 100%;
+      padding: 2rem 1.5rem;
+      border-radius: 2rem;
+
+      .brand-logo {
+        font-size: 1.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      form {
+        gap: 1.25rem;
+      }
+
+      .input-group {
+        label {
+          font-size: 0.9rem;
+        }
+
+        input {
+          padding: 1rem 1.25rem;
+          font-size: 0.95rem;
+        }
+      }
+
+      .button {
+        padding: 1rem;
+        font-size: 1rem;
+      }
+
+      p {
+        font-size: 0.9rem;
+      }
+
+      &.register-container {
+        min-width: 100%;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .login-container {
+      padding: 1.5rem 1rem;
+      gap: 1.25rem;
+
+      .brand-logo {
+        font-size: 1.3rem;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      form {
+        gap: 1rem;
+      }
+
+      .input-group {
+        gap: 0.5rem;
+
+        label {
+          font-size: 0.85rem;
+          margin-left: 0.5rem;
+        }
+
+        input {
+          padding: 0.9rem 1rem;
+          font-size: 0.9rem;
+          border-radius: 1.5rem;
+        }
+      }
+
+      .button {
+        padding: 0.9rem;
+        font-size: 0.95rem;
+        border-radius: 1.5rem;
+      }
+
+      p {
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
+      }
     }
   }
 }
