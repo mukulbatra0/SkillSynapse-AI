@@ -1,4 +1,7 @@
-import { PDFParse } from "pdf-parse";
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+
 import {generateResumeReport , genrateResumePdf} from "../services/ai.service.js";
 import InterviewReport from "../models/interviewReport.model.js";
 
@@ -56,39 +59,79 @@ const sanitizeQuestions = (questions) => {
  */
 async function generateInterviewReportController(req, res) {
   try {
+    console.log('=== Starting interview report generation ===');
     const resumeFile = req.file;
     
     if (!resumeFile) {
+      console.log('ERROR: No resume file provided');
       return res.status(400).json({
         message: "Resume file is required"
       });
     }
     
-    const parser = new PDFParse({ data: resumeFile.buffer });
+    console.log('Resume file received:', {
+      originalname: resumeFile.originalname,
+      mimetype: resumeFile.mimetype,
+      size: resumeFile.size
+    });
     
-    // Extract text
-    const resumeContent = await parser.getText();
+    // Parse PDF using pdf-parse
+    console.log('Parsing PDF...');
     
-    // Clean up (optional but recommended)
-    await parser.destroy();
+    // Create an instance of PDFParse class with buffer in data property
+    const parser = new pdfParse.PDFParse({ data: resumeFile.buffer });
+    
+    // Try different methods to get text
+    let resumeContent;
+    try {
+      // Try getText method
+      resumeContent = await parser.getText();
+    } catch (err) {
+      console.log('getText failed, trying alternative methods...');
+      // Try other possible methods
+      if (typeof parser.parse === 'function') {
+        resumeContent = await parser.parse();
+      } else if (typeof parser.extract === 'function') {
+        resumeContent = await parser.extract();
+      } else {
+        // List available methods
+        console.log('Available parser methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(parser)));
+        throw new Error('Could not find appropriate parse method');
+      }
+    }
+    
+    console.log('PDF parsed successfully. Text length:', resumeContent.text?.length);
+    
     const { selfDescription, jobDescription } = req.body;
+    console.log('Request body:', {
+      selfDescriptionLength: selfDescription?.length,
+      jobDescriptionLength: jobDescription?.length
+    });
 
+    console.log('Calling AI service to generate report...');
     const interviewReportByAi = await generateResumeReport({
       resume: resumeContent.text,
       selfDescription,
       jobDescription
     });
+    console.log('AI report generated successfully');
+    console.log('AI response keys:', Object.keys(interviewReportByAi));
     
     // Sanitize the AI response to ensure proper structure
+    console.log('Sanitizing AI response...');
     const sanitizedReport = {
       ...interviewReportByAi,
       technicalQuestions: sanitizeQuestions(interviewReportByAi.technicalQuestions),
       behavioralQuestions: sanitizeQuestions(interviewReportByAi.behavioralQuestions),
       skillGaps: sanitizeSkillGaps(interviewReportByAi.skillGaps),
-      preparationPlan: sanitizePrepPlan(interviewReportByAi.preparationPlan)
+      preparationPlan: sanitizePrepPlan(interviewReportByAi.preparationPlan),
+      // Ensure title exists, fallback to a default if not provided by AI
+      title: interviewReportByAi.title || 'Interview Preparation Report'
     };
+    console.log('Report sanitized successfully');
 
     // Save the interview report to the database
+    console.log('Saving to database...');
     const interviewReport = await InterviewReport.create({
       user: req.user.id,
       resume: resumeContent.text,
@@ -96,16 +139,22 @@ async function generateInterviewReportController(req, res) {
       jobDescription,
       ...sanitizedReport
     });
+    console.log('Report saved successfully with ID:', interviewReport._id);
 
     res.status(201).json({
       message: "Interview report generated successfully",
       interviewReport
     });
   } catch (error) {
-    console.error('Error generating interview report:', error);
+    console.error('=== ERROR in generateInterviewReportController ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     res.status(500).json({
       message: "Failed to generate interview report",
-      error: error.message
+      error: error.message,
+      errorType: error.name
     });
   }
 }

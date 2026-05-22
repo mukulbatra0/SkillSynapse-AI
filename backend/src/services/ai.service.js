@@ -83,41 +83,112 @@ Requirements:
 - Avoid generic responses
 - Keep answers concise but actionable`;
 
-  try {
-    const completion = await client.chat.completions.create({
-      model: "qwen/qwen3.5-122b-a10b",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.4,
-      max_tokens: 4000,
-      response_format: { type: "json_object" }
-    });
+  // List of models to try in order of preference
+  const modelsToTry = [
+    "qwen/qwen3.5-122b-a10b"
+  ];
 
-    const responseText = completion.choices[0].message.content.trim();
-    
-    // Remove markdown code blocks if present
-    let cleanedText = responseText;
-    if (cleanedText.startsWith('```json')) {
-      cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
-    } else if (cleanedText.startsWith('```')) {
-      cleanedText = cleanedText.replace(/```\n?/g, '');
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      console.log(`=== Trying model: ${model} ===`);
+      console.log('Resume length:', resume?.length);
+      console.log('Self description length:', selfDescription?.length);
+      console.log('Job description length:', jobDescription?.length);
+      
+      const completion = await client.chat.completions.create({
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.4,
+        max_tokens: 4000,
+        // Removed response_format as it causes empty responses
+      });
+
+      console.log('AI response received successfully');
+      
+      // Check if response exists
+      if (!completion.choices || !completion.choices[0] || !completion.choices[0].message) {
+        console.error('Invalid response structure:', JSON.stringify(completion));
+        throw new Error('Invalid API response structure');
+      }
+      
+      // The API returns data in either 'content' or 'reasoning_content' field
+      const message = completion.choices[0].message;
+      const responseText = message.content || message.reasoning_content;
+      
+      if (!responseText) {
+        console.error('Empty response content');
+        console.log('Full completion object:', JSON.stringify(completion, null, 2));
+        continue; // Try next model
+      }
+      
+      const trimmedResponse = responseText.trim();
+      console.log('Response text length:', trimmedResponse.length);
+      console.log('Response preview (first 500 chars):', trimmedResponse.substring(0, 500));
+      
+      // If response is too short, it's likely empty or invalid
+      if (trimmedResponse.length < 50) {
+        console.log('Response too short, trying next model...');
+        continue;
+      }
+      
+      // Remove markdown code blocks if present
+      let cleanedText = trimmedResponse;
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/```\n?/g, '');
+      }
+      
+      // Try to extract JSON if it's embedded in text
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedText = jsonMatch[0];
+      }
+      
+      console.log('Parsing JSON response...');
+      const parsedData = JSON.parse(cleanedText);
+      console.log('Parsed data keys:', Object.keys(parsedData));
+      
+      // Validate that we have the required fields
+      if (!parsedData.matchScore && !parsedData.technicalQuestions && !parsedData.behavioralQuestions) {
+        console.log('Response missing required fields, trying next model...');
+        continue;
+      }
+      
+      console.log('Match score:', parsedData.matchScore);
+      console.log('Technical questions count:', parsedData.technicalQuestions?.length);
+      console.log('Behavioral questions count:', parsedData.behavioralQuestions?.length);
+      
+      return parsedData;
+    } catch (error) {
+      console.error(`Model ${model} failed:`, error.message);
+      lastError = error;
+      
+      // If it's a 403/401, try next model
+      if (error.status === 403 || error.status === 401 || error.message?.includes('403') || error.message?.includes('401')) {
+        console.log(`Access denied for ${model}, trying next model...`);
+        continue;
+      }
+      
+      // For other errors, throw immediately
+      throw error;
     }
-    
-    return JSON.parse(cleanedText);
-  } catch (error) {
-    console.error("Error generating interview report:", error);
-    if (error instanceof SyntaxError) {
-      throw new Error("Failed to parse AI response. Please try again.");
-    }
-    throw error;
   }
+
+  // If all models failed
+  console.error("=== All models failed ===");
+  throw new Error(`Failed to generate report. Please check your NVIDIA API key at https://build.nvidia.com/. Last error: ${lastError?.message}`);
 }
 
 async function generatePdf(htmlContent) {
   let browser;
+  let page;
   try {
     console.log('Launching Puppeteer browser...');
     browser = await puppeteer.launch({
-      headless: true,
+      headless: 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -125,34 +196,55 @@ async function generatePdf(htmlContent) {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-extensions'
       ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
+      timeout: 30000,
+      protocolTimeout: 30000
     });
     console.log('Browser launched successfully');
     
-    const page = await browser.newPage();
+    page = await browser.newPage();
+    
+    // Set a reasonable timeout
+    await page.setDefaultTimeout(30000);
+    await page.setDefaultNavigationTimeout(30000);
+    
     console.log('Setting HTML content...');
-    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    await page.setContent(htmlContent, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    });
     
     console.log('Generating PDF...');
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
       printBackground: true,
-      preferCSSPageSize: true
+      preferCSSPageSize: true,
+      timeout: 30000
     });
-    console.log('PDF generated successfully');
+    console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+    
+    // Close page before closing browser
+    await page.close();
+    await browser.close();
+    console.log('Browser closed successfully');
     
     return pdfBuffer;
   } catch (error) {
     console.error('Error in generatePdf:', error);
-    throw new Error(`PDF generation failed: ${error.message}`);
-  } finally {
-    if (browser) {
-      await browser.close();
-      console.log('Browser closed');
+    console.error('Error stack:', error.stack);
+    
+    // Ensure cleanup
+    try {
+      if (page) await page.close().catch(() => {});
+      if (browser) await browser.close().catch(() => {});
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
     }
+    
+    throw new Error(`PDF generation failed: ${error.message}`);
   }
 }
 
@@ -193,23 +285,41 @@ Return format:
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
       max_tokens: 3000,
-      response_format: { type: "json_object" }
+      // Remove response_format as it causes empty responses
     });
 
-    const responseText = completion.choices[0].message.content.trim();
+    // Check for content in both 'content' and 'reasoning_content' fields
+    const message = completion.choices[0].message;
+    const responseText = message.content || message.reasoning_content;
+    
+    if (!responseText) {
+      console.error('Empty response from AI');
+      throw new Error('AI returned empty response');
+    }
+    
+    const trimmedResponse = responseText.trim();
     console.log('Received AI response, parsing JSON...');
+    console.log('Response preview:', trimmedResponse.substring(0, 200));
     
     // Remove markdown code blocks if present
-    let cleanedText = responseText;
+    let cleanedText = trimmedResponse;
     if (cleanedText.startsWith('```json')) {
       cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
     } else if (cleanedText.startsWith('```')) {
       cleanedText = cleanedText.replace(/```\n?/g, '');
     }
     
+    // Try to extract JSON if it's embedded in text
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[0];
+    }
+    
     const jsonContent = JSON.parse(cleanedText);
+    console.log('JSON parsed. Keys:', Object.keys(jsonContent));
     
     if (!jsonContent.html) {
+      console.error('AI response structure:', JSON.stringify(jsonContent, null, 2).substring(0, 500));
       throw new Error('AI response missing HTML content');
     }
     
